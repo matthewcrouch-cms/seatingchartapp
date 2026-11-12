@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seating charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F7FA; --panel:#FFFFFF; --ink:#15283A; --muted:#5A6B7C; --line:#D3DFE9; --grid:#E2EBF3;
+  --desk:#FFFFFF; --desk-edge:#9DB3C6; --tint:#E6F1F9;
+  --blue:#4B9CD3; --blue-ink:#1D6AA0; --on-blue:#FFFFFF; --orange:#E05E00; --orange-soft:#FFE8D8; --off:#E9EEF2;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1822; --panel:#142231; --ink:#E3ECF4; --muted:#93A6B8; --line:#25384A; --grid:#172636;
+    --desk:#1A2B3C; --desk-edge:#3B5770; --tint:#16293A;
+    --blue:#6CB4E4; --blue-ink:#8DC8EF; --on-blue:#0E1822; --orange:#FF8A3D; --orange-soft:#3A2414; --off:#122030;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1822; --panel:#142231; --ink:#E3ECF4; --muted:#93A6B8; --line:#25384A; --grid:#172636;
+  --desk:#1A2B3C; --desk-edge:#3B5770; --tint:#16293A;
+  --blue:#6CB4E4; --blue-ink:#8DC8EF; --on-blue:#0E1822; --orange:#FF8A3D; --orange-soft:#3A2414; --off:#122030;
+  color-scheme: dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-areas:"head head" "side main";gap:0 28px;max-width:1500px;margin:0 auto;padding:18px 24px 40px}
+header{grid-area:head;display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 28px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+header h1{font-size:26px;line-height:1.1;margin:0;letter-spacing:-.01em}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{border:1.5px solid var(--line);background:var(--panel);border-radius:10px;padding:6px 14px 5px;text-align:left;line-height:1.15}
+.tab b{display:block;font-size:17px}
+.tab span{font-size:12px;color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--blue-ink);background:var(--blue-ink);color:var(--on-blue)}
+.tab[aria-selected="true"] span{color:inherit;opacity:.85}
+
+aside{grid-area:side;display:flex;flex-direction:column;gap:14px;min-width:0}
+main{grid-area:main;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.panel h2{font-size:16px;margin:0 0 8px}
+.panel p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.btn{border:1.5px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 12px;font-weight:700;font-size:14px}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue-ink);border-color:var(--blue-ink);color:var(--on-blue);font-size:16px;padding:10px 16px;width:100%}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.armed{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.link{border:0;background:none;padding:2px 4px;color:var(--blue-ink);font-weight:700;font-size:13px}
+.link.danger{color:var(--orange)}
+.link.armed{background:var(--orange);color:#fff;border-radius:4px}
+label.opt{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin-top:8px}
+label.opt input{margin-top:3px}
+select,input[type=text]{border:1.5px solid var(--line);background:var(--paper);border-radius:7px;padding:5px 8px;font-size:14px;min-width:0}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row > input[type=text]{flex:1}
+.summary{margin-top:10px;font-size:14px;color:var(--ink)}
+.list{list-style:none;margin:8px 0 0;padding:0;max-height:260px;overflow:auto}
+.list li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line);font-size:14px}
+.list li:first-child{border-top:0}
+.list .meta{color:var(--muted);font-size:12px;display:block}
+details summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--blue-ink);margin-top:6px}
+.sync{font-size:12px;color:var(--muted);padding:0 4px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.toolbar h2{margin:0;font-size:22px;line-height:1.2}
+.toolbar h2 small{display:block;font-size:14px;font-weight:400;color:var(--muted)}
+.toolbar .row{gap:6px}
+
+.stage-wrap{width:100%;max-width:calc((100dvh - 210px) * var(--ratio));min-width:min(100%,520px);margin:0 auto}
+.stage{display:flex;gap:8px}
+.stage.b-top{flex-direction:column}
+.stage.b-bottom{flex-direction:column-reverse}
+.stage.b-left{flex-direction:row}
+.stage.b-right{flex-direction:row-reverse}
+.board{background:var(--ink);color:var(--paper);border-radius:6px;text-align:center;font-weight:700;font-size:13px;padding:4px 10px;letter-spacing:.02em}
+.stage.b-left .board,.stage.b-right .board{writing-mode:vertical-rl;padding:10px 4px}
+.stage.b-left .board{transform:rotate(180deg)}
+.map{position:relative;flex:1;aspect-ratio:var(--ratio);container-type:inline-size;border:1px solid var(--line);border-radius:10px;
+  background-color:var(--panel);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:2.5% var(--gy)}
+.surface{position:absolute;background:var(--tint);border-radius:1.1cqw}
+.badge{position:absolute;display:flex;align-items:center;justify-content:center;font-size:1.2cqw;font-weight:700;color:var(--blue-ink);background:var(--panel);border:1.5px solid var(--blue);border-radius:99px;padding:0;white-space:nowrap}
+button.badge:hover{background:var(--tint)}
+.badge.off{color:var(--muted);border-style:dashed;border-color:var(--desk-edge)}
+.seat{position:absolute;background:var(--desk);border:1.5px solid var(--desk-edge);border-radius:.7cqw;display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:.4cqw .45cqw;font-size:1.36cqw;font-weight:700;line-height:1.12;cursor:pointer;overflow:hidden;overflow-wrap:break-word;user-select:none;-webkit-user-select:none}
+.seat .nm{max-width:100%}
+.seat .nm.f2{font-size:1.1cqw}
+.seat .nm.f3{font-size:.9cqw}
+.seat .nm.f4{font-size:.76cqw}
+.seat.empty{background:transparent;border-style:dashed;color:var(--muted);font-weight:400;cursor:default}
+.seat.empty .nm{font-size:1cqw}
+.seat.target{cursor:pointer;background:var(--orange-soft)}
+.seat.off{background:repeating-linear-gradient(45deg,var(--off) 0 .5cqw,transparent .5cqw 1cqw);border-style:dashed;cursor:not-allowed;color:transparent}
+.seat.sel{outline:.35cqw solid var(--orange);outline-offset:.15cqw}
+.seat.locked{border-color:var(--orange);box-shadow:inset 0 0 0 1.5px var(--orange)}
+.seat.drop{background:var(--orange-soft)}
+.lock{position:absolute;top:.25cqw;right:.25cqw;width:1.9cqw;height:1.9cqw;padding:.25cqw;border:0;background:none;color:var(--muted);opacity:.28;border-radius:.4cqw;display:flex}
+.lock svg{width:100%;height:100%}
+.seat:hover .lock,.lock:focus-visible{opacity:.85}
+.seat.locked .lock{opacity:1;color:var(--orange)}
+
+.tray-wrap{margin-top:14px}
+.tray{min-height:46px;border:1.5px dashed var(--desk-edge);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tray.drop{background:var(--orange-soft)}
+.tray .hint{color:var(--muted);font-size:13px;padding:0 4px}
+.tray-label{font-weight:700;font-size:14px;margin:0 0 6px}
+.chip{border:1.5px solid var(--desk-edge);background:var(--desk);border-radius:99px;padding:4px 12px;font-weight:700;font-size:14px}
+.chip.sel{border-color:var(--orange);outline:2px solid var(--orange)}
+.status{margin-top:12px;font-size:14px}
+.status p{margin:2px 0}
+.status .warn{color:var(--orange);font-weight:700}
+.panel p.warnText{color:var(--orange)}
+.help{color:var(--muted);font-size:13px;margin-top:6px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw}
+.toast.show{opacity:1}
+
+/* Present mode */
+.present-bar{display:none}
+body.presenting header,body.presenting aside,body.presenting .toolbar,body.presenting .tray-wrap,body.presenting .status,body.presenting .help{display:none}
+body.presenting .app{display:block;max-width:none;padding:12px 20px}
+body.presenting .present-bar{display:flex;justify-content:space-between;align-items:flex-start;position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:16px;right:16px;z-index:5;pointer-events:none}
+body.presenting .present-bar > *{pointer-events:auto}
+body.presenting .present-bar h2{display:none}
+body.presenting .present-bar > .row{margin-left:auto}
+.board{position:relative}
+.board-cls{display:none;position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:inherit}
+body.presenting .stage.b-top .board-cls,body.presenting .stage.b-bottom .board-cls{display:block}
+body.presenting .stage-wrap{max-width:calc((100dvh - 64px) * var(--ratio))}
+body.presenting .lock{display:none}
+body.presenting .map{background-image:none}
+body.presenting .seat{padding:.35cqw;overflow-wrap:normal;word-break:keep-all;hyphens:none;line-height:1.05}
+body.presenting .seat.empty .nm{font-size:1.1cqw}
+body.presenting .badge{font-size:2cqw}
+body.presenting .board{font-size:18px;padding:6px 10px}
+
+#print-root{display:none}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;grid-template-areas:"head" "main" "side";padding:14px}
+  aside{margin-top:24px}
+  .stage-wrap{max-width:none;min-width:0}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+@media print{
+  :root,:root[data-theme="dark"],:root:not([data-theme="light"]){
+    --paper:#fff;--panel:#fff;--ink:#000;--muted:#555;--line:#bbb;--grid:#fff;--desk:#fff;--desk-edge:#666;--tint:#f2f2f2;--blue:#444;--blue-ink:#000;--off:#eee;color-scheme:light}
+  @page{size:letter landscape;margin:.4in}
+  body{background:#fff}
+  .app,.toast{display:none!important}
+  #print-root{display:block}
+  .print-page{break-after:page;page-break-after:always}
+  .print-page:last-child{break-after:auto;page-break-after:auto}
+  .print-page h2{font-size:20pt;margin:0 0 2pt}
+  .print-page .date{font-size:11pt;color:#555;margin:0 0 10pt}
+  .print-page .lock{display:none}
+  .print-page .seat.locked{border-color:#666;box-shadow:none}
+  .print-page .map{border-color:#999}
+  .print-page .stage{width:min(100%,9in);margin:0 auto}
+  .print-page .board{background:#000!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-page .seat{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Seating charts</h1>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </header>
+
+  <aside>
+    <section class="panel">
+      <button class="btn primary" id="shuffle">Shuffle seats</button>
+      <label class="opt"><span>Avoid repeat tablemates from the last
+        <select id="avoidLast"><option value="0">0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        saved charts</span></label>
+      <label class="opt"><input type="checkbox" id="moveTables"><span>Move each student to a different table than last time</span></label>
+      <div class="summary" id="summary"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Saved charts</h2>
+      <p>Save a chart when you use it, so the next shuffle can mix up groups.</p>
+      <div class="row"><input type="text" id="chartName" placeholder="Name (optional)" maxlength="40"><button class="btn" id="saveChart">Save chart</button></div>
+      <ul class="list" id="history"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Keep apart</h2>
+      <p>Shuffle won’t put these students at the same table.</p>
+      <div class="row"><select id="apartA" style="flex:1"></select><select id="apartB" style="flex:1"></select></div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addApart">Add pair</button></div>
+      <ul class="list" id="apartList"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Students</h2>
+      <div class="row"><input type="text" id="newFirst" placeholder="First name"><input type="text" id="newLast" placeholder="Last name"></div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="addStudent">Add student</button></div>
+      <details><summary id="rosterSummary">Roster</summary><ul class="list" id="roster"></ul></details>
+    </section>
+
+    <section class="panel">
+      <h2>Room</h2>
+      <label class="opt" style="align-items:center"><span style="flex:1">Front of room</span>
+        <select id="board"><option value="top">Top</option><option value="bottom">Bottom</option><option value="left">Left</option><option value="right">Right</option></select></label>
+      <label class="opt" style="align-items:center"><span style="flex:1">Names</span>
+        <select id="names"><option value="firstL">First name, last initial</option><option value="full">First and last name</option><option value="first">First name only</option></select></label>
+      <label class="opt"><input type="checkbox" id="rotate"><span>Flip the room 180° (student’s-eye view)</span></label>
+    </section>
+    <section class="panel">
+      <h2>Backup</h2>
+      <p id="backupInfo"></p>
+      <div class="row"><button class="btn" id="backup">Download backup</button><button class="btn" id="restore">Restore</button></div>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+    </section>
+    <div class="sync" id="sync">Saved in this browser.</div>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <h2 id="title"></h2>
+      <div class="row">
+        <button class="btn" id="undo">Undo</button>
+        <button class="btn" id="clear">Clear seats</button>
+        <button class="btn" id="present">Present</button>
+        <button class="btn" id="download">Download image</button>
+        <button class="btn" id="print">Print</button>
+        <button class="btn" id="printAll">Print all classes</button>
+      </div>
+    </div>
+    <div class="present-bar"><h2 id="presentTitle"></h2><div class="row"><button class="btn" id="flipPresent">Flip</button><button class="btn" id="exitPresent">Exit</button></div></div>
+    <div class="stage-wrap" id="stageWrap"></div>
+    <p class="help">Click two seats to swap them, or drag one onto another. The lock keeps a student in that seat when you shuffle. Click a table’s label to turn it off for small classes.</p>
+    <div class="tray-wrap">
+      <p class="tray-label" id="trayLabel">Not seated</p>
+      <div class="tray" id="tray"></div>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+<div id="print-root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const ROSTERS = [{"key": "1A", "course": "AP Statistics", "label": "1A", "students": [["Agbewali", "Nataly"], ["Alvarez Pimentel", "Vanessa"], ["Barun", "Kavin"], ["Bokam", "Jai"], ["Bonilla", "Tiffany"], ["Conyers", "Bradford"], ["Estrada Rivera", "Fabian"], ["Fang", "Natalie"], ["Farooqi", "Zeeshan"], ["Gutierrez", "Adrian"], ["Holgorsen", "Alayna"], ["Hyland", "Tallyn"], ["Kelley", "Linkyn"], ["Limaye", "Tanvi"], ["Love", "Giana"], ["Patel", "Megh"], ["Pedrote", "Lenin"], ["Price", "Samson"], ["Ranganathan", "Advita"], ["Salazar", "Vicky"], ["Soto", "Chris"], ["Sridhar", "Krish"], ["Sriram", "Daksha"], ["Thomas", "Annie"], ["Vasquez Hernandez", "Sharon"], ["Watson", "Brynn"], ["Xiang", "Mason"], ["Zhang", "Nina"], ["Zhao", "Grace"]]}, {"key": "2A", "course": "AP Statistics", "label": "2A", "students": [["Acosta Valverde", "Fabian"], ["Bartis", "Nicole"], ["Cachiguango Perugachi", "Eli"], ["Clapham", "Emma"], ["Collazo", "Lucas"], ["Dorn", "Maddie"], ["Fencl", "Beckett"], ["Franco Troncoso", "Maria"], ["Gallimore", "Andrew"], ["Gallipeau", "Ethan"], ["Jennings", "Sophia"], ["Johnson", "Miller"], ["Katakota", "Sai"], ["Kim", "Ju Yeon"], ["Koppunoor", "Saharsh"], ["Lewis", "Jordan"], ["Lieber", "Ava"], ["Lundgren", "Cameron"], ["Metzcus", "Vivienne"], ["Murray", "Jemma"], ["O'Donovan", "Carver"], ["Perkins", "Charlotte"], ["Raedy", "Conor"], ["Santos", "Penelope"], ["Santosh", "Anay"], ["Shirieva", "Amina"], ["Shyam", "Johan"], ["Smith", "Olivia"], ["Srinivasan", "Atharva"], ["Switzer", "Audrey"], ["Trotta", "Peyton"], ["Zhang", "Jaylon"]]}, {"key": "2B", "course": "AP Statistics", "label": "2B", "students": [["Allen", "Simon"], ["Allumolu", "Medhini"], ["Bao-Dai", "Max"], ["Bizoara", "Sujal"], ["Boswell", "Cicely"], ["Dhoot", "Aryan"], ["Dhulipudi", "Svana"], ["Dodson", "Kaiya"], ["Fritz", "Mathias"], ["Ghotge", "Aahana"], ["Giuriato", "Daniel"], ["Gregorio Borrachando", "Jacqueline"], ["Hiremath", "Ashmi"], ["Hosamani", "Chandan"], ["Hughes", "Camryn"], ["Last", "Sydney"], ["Leonard", "Isabella"], ["Little", "Roscoe"], ["Lu", "Michael"], ["Ludwiczak", "Leah"], ["Madapakula", "Varika"], ["McCue", "Silas"], ["McGough", "Caroline"], ["McKenzie", "Kyla"], ["Mitnitsky", "Blake"], ["Munroe", "Jalen"], ["Nueman", "Phanuel"], ["Parmar", "Hasti"], ["Priest", "Emma"], ["Rana", "Rahul"], ["Rosas", "Fletcher"], ["Ruesch", "Hunter"], ["Walker", "Matthew"], ["Whitcomb", "Campbell"]]}, {"key": "3B", "course": "AP Statistics", "label": "3B", "students": [["Abdelrahman", "Jad"], ["Agbewali", "Nataliya"], ["Akula", "Sahasra"], ["Antsypovich", "Diana"], ["Caesar", "Zion"], ["Chando", "Natanya"], ["Delfino", "Devin"], ["Flett", "Tate"], ["Fogle", "Rylen"], ["Gautreaux", "Evan"], ["Hand", "Aleese-Nichole"], ["Hiremath", "Anvita"], ["Hoxha", "Valbona"], ["Hundrieser", "Renn"], ["Jones", "Xavier"], ["Katz", "Leo"], ["Kiran", "Avika"], ["Kumar", "Akshant"], ["Lakhani", "Riva"], ["Malapati", "Hansika"], ["McCullen", "Evan"], ["Noorbakhsh-Castaneda", "Sophia"], ["O'Rourke", "Declan"], ["Pivaque Ortega", "Cielo"], ["Ramanathan", "Mukesh"], ["Ruesch", "Lincoln"], ["Ryder", "Claire"], ["Santoro", "Delaney"], ["Sen", "Roshan"], ["Sharma", "Tejas"], ["Vasanth", "Niyanthri"], ["Vetrivel", "Aditi"]]}, {"key": "4th", "course": "Math 1 Honors", "label": "4th: S1", "students": [["Brown", "Destiny"], ["Derteano", "Valentino"], ["Dominy", "Gracie / Elizabeth"], ["Gil-Najarro", "Daniel"], ["Harrison-Rowan", "Theo / Theodore"], ["Hoxha", "Dario"], ["James", "Aubrey"], ["Jeffers", "Brody"], ["Maloney", "Patrick"], ["Mims Sandoval", "Celeste"], ["Nelson", "Zoie"], ["Nieto Correal", "Paula"], ["Nosike", "Uchechi"], ["Parashar", "Yaduraj"], ["Pearson", "Jackson"], ["Raj", "Asha"], ["Silla", "Crystal"], ["Tate", "Isaiah"], ["Trammel", "Davien"], ["Wilson", "Ellis"]]}];
+const S = 193, G = 7;
+const RAW = [
+  {n:1, seats:[[181,82],[374,82],[181,275],[374,275],[279,468]]},
+  {n:2, seats:[[1232,64],[1425,64],[1232,257],[1425,257],[1330,450]]},
+  {n:3, seats:[[2004,320],[2197,320],[2004,513],[2197,513]]},
+  {n:4, seats:[[770,562],[963,562],[770,755],[963,755]]},
+  {n:5, seats:[[136,820],[329,820],[136,1013],[329,1013]]},
+  {n:6, seats:[[770,1141],[963,1141],[770,1334],[963,1334]]},
+  {n:7, seats:[[1455,1141],[1648,1141],[1455,1334],[1648,1334]]},
+  {n:8, seats:[[2059,903],[2252,903],[2059,1096],[2252,1096]]},
+];
+const PADX = 30, PADY = 95;
+const minX = Math.min(...RAW.flatMap(t=>t.seats.map(s=>s[0]))), maxX = Math.max(...RAW.flatMap(t=>t.seats.map(s=>s[0]+S)));
+const minY = Math.min(...RAW.flatMap(t=>t.seats.map(s=>s[1]))), maxY = Math.max(...RAW.flatMap(t=>t.seats.map(s=>s[1]+S)));
+const W = maxX-minX+2*PADX, H = maxY-minY+2*PADY;
+const TABLES = RAW.map(t=>({n:t.n, seats:t.seats.map(([x,y])=>[x-minX+PADX, y-minY+PADY])}));
+const TOTAL_SEATS = TABLES.reduce((a,t)=>a+t.seats.length,0);
+document.documentElement.style.setProperty('--ratio', (W/H).toFixed(4));
+document.documentElement.style.setProperty('--gy', (2.5*W/H).toFixed(3)+'%');
+const LS = 'seating-charts-v1';
+
+/* ---------- state ---------- */
+function makeClass(r){
+  return {key:r.key, course:r.course, label:r.key==='4th'?'4th block':r.key,
+    roster:r.students.map(([last,first])=>({id:r.key+'|'+last+'|'+first, first, last})),
+    seats:{}, locked:[], closed:[], apart:[], history:[]};
+}
+function defaultState(){
+  const classes={}; ROSTERS.forEach(r=>classes[r.key]=makeClass(r));
+  return {v:1, updatedAt:0, active:ROSTERS[0].key, settings:{board:'top', rotate:false, names:'firstL', avoidLast:3, moveTables:true}, classes};
+}
+function normalize(st){
+  const d = defaultState();
+  if(!st || typeof st!=='object' || !st.classes) return d;
+  st.settings = Object.assign(d.settings, st.settings||{});
+  ROSTERS.forEach(r=>{ if(!st.classes[r.key]) st.classes[r.key]=d.classes[r.key]; });
+  for(const c of Object.values(st.classes)){ c.seats=c.seats||{}; c.locked=c.locked||[]; c.closed=c.closed||[]; c.apart=c.apart||[]; c.history=c.history||[]; }
+  if(!st.classes[st.active]) st.active = ROSTERS[0].key;
+  return st;
+}
+let state = (()=>{ try{ const s=localStorage.getItem(LS); return normalize(s?JSON.parse(s):null);}catch(e){ return defaultState(); } })();
+const cls = ()=>state.classes[state.active];
+let sel = null;
+const undoStack = {};
+const lastSummary = {};
+
+function snap(c){ const s=(undoStack[c.key] ||= []); s.push(JSON.stringify({seats:c.seats,locked:c.locked,closed:c.closed})); if(s.length>40) s.shift(); }
+function commit(){
+  state.updatedAt = Date.now();
+  try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){}
+  queueRemote(); render();
+}
+
+/* ---------- helpers ---------- */
+const $ = id=>document.getElementById(id);
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const tableOfSeat = seat=>+seat.split('-')[0];
+function firstOf(s){ return s.first.split('/')[0].trim(); }
+function displayNames(c){
+  const style = state.settings.names, out={};
+  const fl = s=>firstOf(s)+' '+s.last.charAt(0)+'.';
+  const full = s=>firstOf(s)+' '+s.last;
+  const counts = {};
+  const base = s=> style==='full'?full(s):style==='first'?firstOf(s):fl(s);
+  c.roster.forEach(s=>{ const b=base(s); counts[b]=(counts[b]||0)+1; });
+  c.roster.forEach(s=>{ let b=base(s); if(counts[b]>1) b = style==='first'?fl(s):full(s); out[s.id]=b; });
+  return out;
+}
+function sortedRoster(c){ return c.roster.slice().sort((a,b)=>a.last.localeCompare(b.last)||a.first.localeCompare(b.first)); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+function chartName(h){ return h.name || fmtDate(h.savedAt); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2600); }
+function arm(btn, label, fn){
+  if(btn.dataset.armed){ fn(); return; }
+  const orig = btn.textContent; btn.dataset.armed='1'; btn.textContent=label; btn.classList.add('armed');
+  setTimeout(()=>{ if(btn.isConnected){ delete btn.dataset.armed; btn.textContent=orig; btn.classList.remove('armed'); } },3000);
+}
+function seatedMap(c){ const m={}; for(const [seat,sid] of Object.entries(c.seats)) m[sid]=seat; return m; }
+function sameSeats(a,b){ const ka=Object.keys(a), kb=Object.keys(b); if(ka.length!==kb.length) return false; return ka.every(k=>a[k]===b[k]); }
+function place(x,y,rot){ return rot?{x:W-x-S, y:H-y-S}:{x,y}; }
+function fitClass(n){ const w=Math.max(...n.split(/[\s-]/).map(x=>x.length)); if(w>12||n.length>34) return 'f4'; if(w>9||n.length>24) return 'f3'; if(w>7||n.length>16) return 'f2'; return 'f1'; }
+const pct = (v,d)=>(v/d*100).toFixed(3)+'%';
+
+/* ---------- shuffle ---------- */
+function shuffleClass(c){
+  const ids = c.roster.map(s=>s.id), N = ids.length, idx={}; ids.forEach((id,i)=>idx[id]=i);
+  const closed = new Set(c.closed);
+  const active = TABLES.filter(t=>!closed.has(t.n));
+  if(!active.length) return {seats:{}, summary:'Every table is off. Turn a table on to seat students.'};
+  const where = seatedMap(c);
+  const lockedSet = new Set(c.locked);
+  const fixedSeat = {}; // seat -> sid
+  for(const sid of c.locked){ const seat=where[sid]; if(seat && !closed.has(tableOfSeat(seat))) fixedSeat[seat]=sid; }
+  const fixedIds = new Set(Object.values(fixedSeat));
+  const free = shuffleArr(ids.filter(id=>!fixedIds.has(id)));
+  const cap={}, count={};
+  active.forEach(t=>{ cap[t.n]=t.seats.length; count[t.n]=0; });
+  Object.keys(fixedSeat).forEach(seat=>count[tableOfSeat(seat)]++);
+  const lockedCount = {...count};
+  const room = active.reduce((a,t)=>a+cap[t.n],0) - Object.keys(fixedSeat).length;
+  const toSeat = Math.min(free.length, room);
+  for(let i=0;i<toSeat;i++){
+    let best=null;
+    for(const t of shuffleArr(active.slice())){ if(count[t.n]>=cap[t.n]) continue; if(best===null || count[t.n]<count[best]) best=t.n; }
+    count[best]++;
+  }
+  // weights
+  const Wt = new Float32Array(N*N);
+  const addW=(a,b,w)=>{ if(a==null||b==null) return; Wt[a*N+b]+=w; Wt[b*N+a]+=w; };
+  c.apart.forEach(([a,b])=>addW(idx[a],idx[b],1000));
+  const K = +state.settings.avoidLast;
+  const hist = K>0 ? c.history.slice(-K) : [];
+  hist.forEach((h,j)=>{
+    const byT={}; for(const [seat,sid] of Object.entries(h.seats)){ if(idx[sid]==null) continue; (byT[tableOfSeat(seat)] ||= []).push(idx[sid]); }
+    for(const g of Object.values(byT)) for(let a=0;a<g.length;a++) for(let b=a+1;b<g.length;b++) addW(g[a],g[b], j+1);
+  });
+  const lastT = new Int8Array(N).fill(-1);
+  const lastH = c.history[c.history.length-1];
+  if(state.settings.moveTables && lastH) for(const [seat,sid] of Object.entries(lastH.seats)) if(idx[sid]!=null) lastT[idx[sid]]=tableOfSeat(seat);
+  const TW = 1.5;
+  const fixedByT = {}; active.forEach(t=>fixedByT[t.n]=[]);
+  for(const [seat,sid] of Object.entries(fixedSeat)) fixedByT[tableOfSeat(seat)].push(idx[sid]);
+  const freeIdx = free.map(id=>idx[id]);
+  const tcost=(a,t)=>lastT[a]===t?TW:0;
+  const groupCost = (g,t)=>{ let s=0; for(let i=0;i<g.length;i++){ s+=tcost(g[i],t); for(let j=i+1;j<g.length;j++) s+=Wt[g[i]*N+g[j]]; } return s; };
+  let best=null, bestCost=Infinity;
+  for(let r=0;r<24;r++){
+    const order = shuffleArr(freeIdx.slice());
+    const groups={}, home=new Int16Array(N).fill(-1), movable=[];
+    let p=0;
+    for(const t of active){ groups[t.n]=fixedByT[t.n].slice(); for(let k=0;k<count[t.n]-lockedCount[t.n];k++){ const a=order[p++]; groups[t.n].push(a); home[a]=t.n; movable.push(a);} }
+    const m = movable.length;
+    if(m>1) for(let it=0;it<4000;it++){
+      const a=movable[Math.floor(Math.random()*m)], b=movable[Math.floor(Math.random()*m)];
+      const ta=home[a], tb=home[b]; if(ta===tb) continue;
+      const GA=groups[ta], GB=groups[tb];
+      let before=tcost(a,ta)+tcost(b,tb), after=tcost(a,tb)+tcost(b,ta);
+      for(const x of GA){ if(x!==a){ before+=Wt[a*N+x]; after+=Wt[b*N+x]; } }
+      for(const x of GB){ if(x!==b){ before+=Wt[b*N+x]; after+=Wt[a*N+x]; } }
+      if(after<=before){ GA[GA.indexOf(a)]=b; GB[GB.indexOf(b)]=a; home[a]=tb; home[b]=ta; }
+    }
+    let total=0; for(const t of active) total+=groupCost(groups[t.n],t.n);
+    if(total<bestCost){ bestCost=total; best=groups; if(total===0) break; }
+  }
+  // seats within tables
+  const seats = {...fixedSeat};
+  for(const t of active){
+    const g = best[t.n].filter(a=>!fixedIds.has(ids[a]));
+    const main = shuffleArr(t.seats.slice(0,4).map((_,i)=>i));
+    const order = main.concat(t.seats.length>4?[4]:[]);
+    const open = order.map(i=>t.n+'-'+i).filter(s=>!fixedSeat[s]);
+    shuffleArr(g).forEach((a,i)=>{ seats[open[i]]=ids[a]; });
+  }
+  const sizes = active.map(t=>best[t.n].length).filter(n=>n>0);
+  const seatedCount = Object.keys(seats).length;
+  let msg = `Seated ${seatedCount} students at ${sizes.length} tables`;
+  if(sizes.length){ const lo=Math.min(...sizes), hi=Math.max(...sizes); msg += lo===hi?` (groups of ${lo}).`:` (groups of ${lo} to ${hi}).`; }
+  if(seatedCount<N) msg += ` ${N-seatedCount} didn’t fit. Turn a table back on or seat them by hand.`;
+  return {seats, summary:msg};
+}
+
+/* ---------- analysis ---------- */
+function analyze(c){
+  const names = displayNames(c), lines=[];
+  const tOf={}; for(const [seat,sid] of Object.entries(c.seats)) tOf[sid]=tableOfSeat(seat);
+  const seatedN = Object.keys(c.seats).length;
+  if(!seatedN){ lines.push(['No one is seated yet. Choose Shuffle seats to start.','']); return lines; }
+  const viol = c.apart.filter(([a,b])=>tOf[a] && tOf[a]===tOf[b]);
+  viol.forEach(([a,b])=>lines.push([`${names[a]} and ${names[b]} are both at Table ${tOf[a]}, but they’re on your keep-apart list.`,'warn']));
+  if(c.apart.length && !viol.length) lines.push(['Keep-apart pairs are all at different tables.','']);
+  const last = c.history[c.history.length-1];
+  if(last){
+    if(sameSeats(last.seats, c.seats)) lines.push([`This is your saved chart “${chartName(last)}”.`,'']);
+    else {
+      const lt={}; for(const [seat,sid] of Object.entries(last.seats)) lt[sid]=tableOfSeat(seat);
+      const byT={}; for(const [sid,t] of Object.entries(tOf)) (byT[t] ||= []).push(sid);
+      const reps=[];
+      for(const g of Object.values(byT)) for(let i=0;i<g.length;i++) for(let j=i+1;j<g.length;j++) if(lt[g[i]] && lt[g[i]]===lt[g[j]]) reps.push(names[g[i]]+' & '+names[g[j]]);
+      if(!reps.length) lines.push([`No tablemates repeat from “${chartName(last)}”.`,'']);
+      else lines.push([`${reps.length} ${reps.length===1?'pair':'pairs'} sat together in “${chartName(last)}”: ${reps.join(', ')}.`,'']);
+    }
+  }
+  return lines;
+}
+
+/* ---------- map ---------- */
+const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function boardSide(rot){ const b=state.settings.board; if(!rot) return b; return {top:'bottom',bottom:'top',left:'right',right:'left'}[b]; }
+function buildStage(c, rot, interactive, k=1){
+  const SZ = S*k;
+  const stage = el('div','stage b-'+boardSide(rot));
+  const board=el('div','board','Front of room'); board.append(el('span','board-cls',`${c.course} ${c.label}`)); stage.append(board);
+  const map = el('div','map'); stage.append(map);
+  const names = displayNames(c), closed=new Set(c.closed), locked=new Set(c.locked);
+  for(const t of TABLES){
+    const off = closed.has(t.n);
+    let boxes = t.seats.map(([x,y])=>place(x,y,rot));
+    if(k!==1){
+      const s0=boxes.slice(0,4), cx=Math.min(...s0.map(b=>b.x))+S, cy=Math.min(...s0.map(b=>b.y))+S;
+      boxes=boxes.map(b=>({x:cx+(b.x-cx)*k, y:cy+(b.y-cy)*k}));
+      const lo=Math.min(...boxes.map(b=>b.x)), hi=Math.max(...boxes.map(b=>b.x))+SZ;
+      const dx = lo<8 ? 8-lo : hi>W-8 ? W-8-hi : 0;
+      boxes=boxes.map(b=>({x:b.x+dx, y:b.y}));
+    }
+    const sq = boxes.slice(0,4);
+    if(!off){
+      const sx=Math.min(...sq.map(b=>b.x)), sy=Math.min(...sq.map(b=>b.y));
+      const s=el('div','surface'); Object.assign(s.style,{left:pct(sx-12,W),top:pct(sy-12,H),width:pct(2*SZ+24,W),height:pct(2*SZ+24,H)}); map.append(s);
+    }
+    const top=Math.min(...boxes.map(b=>b.y)), lx=Math.min(...boxes.map(b=>b.x)), rx=Math.max(...boxes.map(b=>b.x+SZ));
+    const bw=230, bh=56;
+    const badge = el(interactive?'button':'div','badge'+(off?' off':''), off?`Table ${t.n} off`:`Table ${t.n}`);
+    Object.assign(badge.style,{left:pct((lx+rx)/2-bw/2,W),top:pct(top-bh-18,H),width:pct(bw,W),height:pct(bh,H)});
+    if(interactive){ badge.dataset.table=t.n; badge.title = off?'Turn this table back on':'Turn this table off'; badge.setAttribute('aria-pressed', off?'false':'true'); }
+    map.append(badge);
+    t.seats.forEach((_,i)=>{
+      const id=t.n+'-'+i, b=boxes[i], sid=c.seats[id];
+      const d=el('div','seat');
+      Object.assign(d.style,{left:pct(b.x+G,W),top:pct(b.y+G,H),width:pct(SZ-2*G,W),height:pct(SZ-2*G,H)});
+      d.dataset.seat=id;
+      if(off){ d.classList.add('off'); d.setAttribute('aria-label',`Table ${t.n} is off`); }
+      else if(sid){
+        const nm=el('span','nm',names[sid]||'?'); nm.classList.add(fitClass(names[sid]||'')); d.append(nm);
+        if(locked.has(sid)) d.classList.add('locked');
+        if(interactive){
+          d.tabIndex=0; d.setAttribute('role','button'); d.draggable=true;
+          d.setAttribute('aria-label',`${names[sid]}, Table ${t.n}${locked.has(sid)?', locked':''}`);
+          const lk=el('button','lock'); lk.innerHTML=LOCK_SVG; lk.dataset.lock=sid; lk.title=locked.has(sid)?'Unlock this seat':'Lock this student here';
+          lk.setAttribute('aria-label', lk.title+': '+names[sid]); d.append(lk);
+          if(sel && sel.type==='seat' && sel.id===id) d.classList.add('sel');
+        }
+      } else {
+        d.classList.add('empty'); d.append(el('span','nm','open'));
+        if(interactive){ d.tabIndex=0; d.setAttribute('role','button'); d.setAttribute('aria-label',`Open seat, Table ${t.n}`); if(sel) d.classList.add('target'); }
+      }
+      map.append(d);
+    });
+  }
+  return stage;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const c = cls(), st = state.settings;
+  // tabs
+  const tabs=$('tabs'); tabs.innerHTML='';
+  for(const k of Object.keys(state.classes)){
+    const cc=state.classes[k]; const b=el('button','tab'); b.setAttribute('role','tab'); b.setAttribute('aria-selected', k===state.active);
+    b.append(el('b',null,cc.label), el('span',null,cc.course)); b.onclick=()=>{ state.active=k; sel=null; commit(); }; tabs.append(b);
+  }
+  const seatedN = Object.keys(c.seats).length;
+  const openSeats = TABLES.filter(t=>!c.closed.includes(t.n)).reduce((a,t)=>a+t.seats.length,0);
+  $('title').innerHTML=''; $('title').append(document.createTextNode(`${c.course} ${c.label}`), el('small',null,`${c.roster.length} students, ${openSeats} seats in use${c.closed.length?` (${c.closed.length} ${c.closed.length===1?'table':'tables'} off)`:''}`));
+  $('presentTitle').textContent = `${c.course} ${c.label}`;
+  $('undo').disabled = !(undoStack[c.key]||[]).length;
+  // stage
+  const wrap=$('stageWrap'); wrap.innerHTML=''; wrap.append(buildStage(c, st.rotate, true, document.body.classList.contains('presenting')?1.1:1));
+  // tray
+  const names=displayNames(c), where=seatedMap(c);
+  const unseated = sortedRoster(c).filter(s=>!where[s.id]);
+  $('trayLabel').textContent = unseated.length?`Not seated (${unseated.length})`:'Not seated';
+  const tray=$('tray'); tray.innerHTML='';
+  if(!unseated.length) tray.append(el('span','hint','Everyone has a seat. Drag a student here to unseat them.'));
+  unseated.forEach(s=>{ const b=el('button','chip',names[s.id]); b.dataset.sid=s.id; b.draggable=true; if(sel&&sel.type==='tray'&&sel.sid===s.id) b.classList.add('sel'); tray.append(b); });
+  if(unseated.length && seatedN) tray.append(el('span','hint','Click a name, then an open seat.'));
+  // status
+  const status=$('status'); status.innerHTML='';
+  analyze(c).forEach(([t,k])=>status.append(el('p',k||null,t)));
+  renderBackup();
+  fitPresent();
+  // side
+  $('avoidLast').value=String(st.avoidLast); $('moveTables').checked=!!st.moveTables;
+  $('board').value=st.board; $('names').value=st.names; $('rotate').checked=!!st.rotate;
+  $('summary').textContent = lastSummary[c.key]||'';
+  // history
+  const hl=$('history'); hl.innerHTML='';
+  if(!c.history.length) hl.append(el('li',null,'No saved charts yet.'));
+  c.history.slice().reverse().forEach(h=>{
+    const li=el('li'); const info=el('div'); info.append(el('span',null,chartName(h)), el('span','meta',`${h.name?fmtDate(h.savedAt)+', ':''}${Object.keys(h.seats).length} students`));
+    const acts=el('div','row'); const ld=el('button','link','Load'); ld.onclick=()=>loadChart(h.id);
+    const del=el('button','link danger','Delete'); del.onclick=()=>arm(del,'Confirm',()=>{ c.history=c.history.filter(x=>x.id!==h.id); commit(); });
+    acts.append(ld,del); li.append(info,acts); hl.append(li);
+  });
+  // apart
+  const sr=sortedRoster(c);
+  for(const sid of ['apartA','apartB']){ const s=$(sid), v=s.value; s.innerHTML=''; s.append(new Option('Choose a student','')); sr.forEach(x=>s.append(new Option(x.first.split('/')[0].trim()+' '+x.last, x.id))); if(c.roster.some(x=>x.id===v)) s.value=v; }
+  const al=$('apartList'); al.innerHTML='';
+  c.apart.forEach((p,i)=>{ const li=el('li',null); li.append(el('span',null,`${names[p[0]]} and ${names[p[1]]}`)); const x=el('button','link danger','Remove'); x.onclick=()=>{ c.apart.splice(i,1); commit(); }; li.append(x); al.append(li); });
+  // roster
+  $('rosterSummary').textContent=`Roster (${c.roster.length})`;
+  const rl=$('roster'); rl.innerHTML='';
+  sr.forEach(s=>{ const li=el('li'); li.append(el('span',null,`${s.last}, ${s.first}`)); const x=el('button','link danger','Remove');
+    x.onclick=()=>arm(x,'Confirm',()=>{ snap(c); c.roster=c.roster.filter(r=>r.id!==s.id); for(const [k,v] of Object.entries(c.seats)) if(v===s.id) delete c.seats[k]; c.locked=c.locked.filter(v=>v!==s.id); c.apart=c.apart.filter(p=>!p.includes(s.id)); commit(); toast(`Removed ${s.first.split('/')[0].trim()} ${s.last}`); });
+    li.append(x); rl.append(li); });
+}
+
+/* ---------- actions ---------- */
+function moveSeat(a,b){
+  const c=cls(); if(c.closed.includes(tableOfSeat(b))){ toast(`Table ${tableOfSeat(b)} is off. Click its label to turn it on.`); return; }
+  snap(c); const sa=c.seats[a], sb=c.seats[b];
+  if(sa) c.seats[b]=sa; else delete c.seats[b];
+  if(sb) c.seats[a]=sb; else delete c.seats[a];
+  sel=null; commit();
+}
+function placeFromTray(sid,seat){
+  const c=cls(); if(c.closed.includes(tableOfSeat(seat))){ toast(`Table ${tableOfSeat(seat)} is off. Click its label to turn it on.`); return; }
+  snap(c); for(const [k,v] of Object.entries(c.seats)) if(v===sid) delete c.seats[k];
+  c.seats[seat]=sid; sel=null; commit();
+}
+function unseat(seat){ const c=cls(); if(!c.seats[seat]) return; snap(c); delete c.seats[seat]; sel=null; commit(); }
+function toggleTable(n){
+  const c=cls(); snap(c);
+  if(c.closed.includes(n)){ c.closed=c.closed.filter(x=>x!==n); commit(); toast(`Table ${n} is on. Shuffle to use it.`); return; }
+  let moved=0; for(const k of Object.keys(c.seats)) if(tableOfSeat(k)===n){ delete c.seats[k]; moved++; }
+  c.closed.push(n); sel=null; commit();
+  toast(moved?`Table ${n} is off. ${moved} ${moved===1?'student moved':'students moved'} to Not seated.`:`Table ${n} is off.`);
+}
+function toggleLock(sid){ const c=cls(); snap(c); c.locked = c.locked.includes(sid)?c.locked.filter(x=>x!==sid):c.locked.concat(sid); commit(); }
+function loadChart(id){
+  const c=cls(), h=c.history.find(x=>x.id===id); if(!h) return; snap(c);
+  const ids=new Set(c.roster.map(s=>s.id)), used=new Set(); c.seats={};
+  for(const [seat,sid] of Object.entries(h.seats)) if(ids.has(sid)&&!used.has(sid)){ c.seats[seat]=sid; used.add(sid); }
+  const usedT=new Set(Object.keys(c.seats).map(tableOfSeat)); c.closed=c.closed.filter(n=>!usedT.has(n));
+  sel=null; commit(); toast(`Loaded “${chartName(h)}”`);
+}
+
+$('stageWrap').addEventListener('click', e=>{
+  const lk=e.target.closest('.lock'); if(lk){ e.stopPropagation(); toggleLock(lk.dataset.lock); return; }
+  const bd=e.target.closest('.badge'); if(bd && bd.dataset.table){ toggleTable(+bd.dataset.table); return; }
+  const seat=e.target.closest('.seat'); if(!seat) return; clickSeat(seat.dataset.seat);
+});
+$('stageWrap').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList.contains('seat')){ e.preventDefault(); clickSeat(e.target.dataset.seat); } });
+function clickSeat(id){
+  const c=cls(), tn=tableOfSeat(id);
+  if(c.closed.includes(tn)){ toast(`Table ${tn} is off. Click its label to turn it on.`); return; }
+  if(!sel){ if(c.seats[id]){ sel={type:'seat',id}; render(); focusSeat(id); } return; }
+  if(sel.type==='seat'){ if(sel.id===id){ sel=null; render(); return; } moveSeat(sel.id,id); return; }
+  if(sel.type==='tray') placeFromTray(sel.sid,id);
+}
+function focusSeat(id){ const s=document.querySelector(`.seat[data-seat="${id}"]`); if(s) s.focus(); }
+$('tray').addEventListener('click', e=>{ const ch=e.target.closest('.chip'); if(!ch) return; sel = (sel&&sel.type==='tray'&&sel.sid===ch.dataset.sid)?null:{type:'tray',sid:ch.dataset.sid}; render(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if(document.body.classList.contains('presenting')) exitPresent(); else if(sel){ sel=null; render(); } } });
+
+// drag and drop
+let dragSrc=null;
+document.addEventListener('dragstart', e=>{
+  const seat=e.target.closest&&e.target.closest('.seat'), chip=e.target.closest&&e.target.closest('.chip');
+  if(seat&&seat.dataset.seat&&cls().seats[seat.dataset.seat]) dragSrc={type:'seat',id:seat.dataset.seat};
+  else if(chip) dragSrc={type:'tray',sid:chip.dataset.sid}; else return;
+  e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain', JSON.stringify(dragSrc)); }catch(_){}
+});
+document.addEventListener('dragover', e=>{ const t=e.target.closest&&e.target.closest('.seat:not(.off), .tray'); if(t&&dragSrc){ e.preventDefault(); document.querySelectorAll('.drop').forEach(x=>x!==t&&x.classList.remove('drop')); t.classList.add('drop'); } });
+document.addEventListener('dragleave', e=>{ const t=e.target.closest&&e.target.closest('.drop'); if(t && !t.contains(e.relatedTarget)) t.classList.remove('drop'); });
+document.addEventListener('dragend', ()=>{ dragSrc=null; document.querySelectorAll('.drop').forEach(x=>x.classList.remove('drop')); });
+document.addEventListener('drop', e=>{
+  const t=e.target.closest&&e.target.closest('.seat:not(.off), .tray'); const src=dragSrc; dragSrc=null;
+  document.querySelectorAll('.drop').forEach(x=>x.classList.remove('drop'));
+  if(!t||!src) return; e.preventDefault();
+  if(t.classList.contains('tray')){ if(src.type==='seat') unseat(src.id); return; }
+  const id=t.dataset.seat; if(src.type==='seat'){ if(src.id!==id) moveSeat(src.id,id); } else placeFromTray(src.sid,id);
+});
+
+$('shuffle').onclick=()=>{ const c=cls(); if(!c.roster.length){ toast('Add students first.'); return; } snap(c); const r=shuffleClass(c); c.seats=r.seats; lastSummary[c.key]=r.summary; sel=null; commit(); };
+$('undo').onclick=()=>{ const c=cls(), s=undoStack[c.key]; if(!s||!s.length) return; Object.assign(c, JSON.parse(s.pop())); sel=null; commit(); };
+$('clear').onclick=function(){ arm(this,'Confirm clear',()=>{ const c=cls(); snap(c); c.seats={}; sel=null; commit(); }); };
+$('saveChart').onclick=()=>{
+  const c=cls(); if(!Object.keys(c.seats).length){ toast('Seat students before saving.'); return; }
+  const name=$('chartName').value.trim();
+  c.history.push({id:Date.now().toString(36), name, savedAt:new Date().toISOString(), seats:{...c.seats}});
+  if(c.history.length>40) c.history.shift();
+  $('chartName').value=''; commit(); toast(`Saved “${name||fmtDate(new Date().toISOString())}”`);
+};
+$('addApart').onclick=()=>{
+  const c=cls(), a=$('apartA').value, b=$('apartB').value;
+  if(!a||!b||a===b){ toast('Choose two different students.'); return; }
+  if(c.apart.some(p=>p.includes(a)&&p.includes(b))){ toast('That pair is already on the list.'); return; }
+  c.apart.push([a,b]); $('apartA').value=''; $('apartB').value=''; commit();
+};
+$('addStudent').onclick=()=>{
+  const c=cls(), first=$('newFirst').value.trim(), last=$('newLast').value.trim();
+  if(!first||!last){ toast('Enter a first and last name.'); return; }
+  const id=c.key+'|'+last+'|'+first+'|'+Date.now().toString(36);
+  c.roster.push({id,first,last}); $('newFirst').value=''; $('newLast').value=''; commit(); toast(`Added ${first} ${last}. They’re in Not seated.`);
+};
+$('avoidLast').onchange=e=>{ state.settings.avoidLast=+e.target.value; commit(); };
+$('moveTables').onchange=e=>{ state.settings.moveTables=e.target.checked; commit(); };
+$('board').onchange=e=>{ state.settings.board=e.target.value; commit(); };
+$('names').onchange=e=>{ state.settings.names=e.target.value; commit(); };
+$('rotate').onchange=e=>{ state.settings.rotate=e.target.checked; commit(); };
+
+// present
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+const IMG_FONT='"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif';
+function wrapFit(ctx,text,maxW,maxH,maxSize,minSize){
+  const words=text.split(' ');
+  for(let size=maxSize; size>=minSize; size-=1){
+    ctx.font=`700 ${size}px ${IMG_FONT}`;
+    if(words.some(w=>ctx.measureText(w).width>maxW)) continue;
+    const lines=[]; let cur='';
+    for(const w of words){ const t=cur?cur+' '+w:w; if(ctx.measureText(t).width<=maxW) cur=t; else { lines.push(cur); cur=w; } }
+    if(cur) lines.push(cur);
+    if(lines.length*size*1.1<=maxH) return {size,lines};
+  }
+  ctx.font=`700 ${minSize}px ${IMG_FONT}`; return {size:minSize, lines:[text]};
+}
+async function chartImage(c){
+  try{ await document.fonts.load(`700 40px "Atkinson Hyperlegible"`); }catch(_){}
+  const rot=state.settings.rotate, k=1.1, SZ=S*k, side=boardSide(rot), vertical=side==='left'||side==='right';
+  const mapW=2400, scale=mapW/W, mapH=Math.round(H*scale), bar=84, gap=22, m=30;
+  const cw=m*2+mapW+(vertical?bar+gap:0), ch=m*2+mapH+(vertical?0:bar+gap);
+  const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; const ctx=cv.getContext('2d');
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,cw,ch);
+  let mx=m, my=m, bx, by, bw, bh;
+  if(side==='top'){ bx=m; by=m; bw=mapW; bh=bar; my=m+bar+gap; }
+  else if(side==='bottom'){ bx=m; by=m+mapH+gap; bw=mapW; bh=bar; }
+  else if(side==='left'){ bx=m; by=m; bw=bar; bh=mapH; mx=m+bar+gap; }
+  else { bx=m+mapW+gap; by=m; bw=bar; bh=mapH; }
+  ctx.fillStyle='#15283A'; roundRect(ctx,bx,by,bw,bh,14); ctx.fill();
+  ctx.save(); ctx.translate(bx+bw/2,by+bh/2); if(vertical) ctx.rotate(side==='left'?-Math.PI/2:Math.PI/2);
+  const len=vertical?bh:bw; ctx.fillStyle='#FFFFFF'; ctx.textBaseline='middle'; ctx.font=`700 38px ${IMG_FONT}`;
+  ctx.textAlign='center'; ctx.fillText('Front of room',0,2);
+  ctx.textAlign='left'; ctx.fillText(`${c.course} ${c.label}`,-len/2+30,2);
+  ctx.restore();
+  ctx.strokeStyle='#D3DFE9'; ctx.lineWidth=3; roundRect(ctx,mx,my,mapW,mapH,20); ctx.stroke();
+  const X=v=>mx+v*scale, Y=v=>my+v*scale, L=v=>v*scale;
+  const names=displayNames(c), closed=new Set(c.closed);
+  for(const t of TABLES){
+    const off=closed.has(t.n);
+    let boxes=t.seats.map(([x,y])=>place(x,y,rot));
+    const s0=boxes.slice(0,4), cx=Math.min(...s0.map(b=>b.x))+S, cy=Math.min(...s0.map(b=>b.y))+S;
+    boxes=boxes.map(b=>({x:cx+(b.x-cx)*k, y:cy+(b.y-cy)*k}));
+    const lo=Math.min(...boxes.map(b=>b.x)), hi=Math.max(...boxes.map(b=>b.x))+SZ, dx=lo<8?8-lo:hi>W-8?W-8-hi:0;
+    boxes=boxes.map(b=>({x:b.x+dx, y:b.y}));
+    const sq=boxes.slice(0,4);
+    if(!off){ const sx=Math.min(...sq.map(b=>b.x)), sy=Math.min(...sq.map(b=>b.y)); ctx.fillStyle='#E6F1F9'; roundRect(ctx,X(sx-12),Y(sy-12),L(2*SZ+24),L(2*SZ+24),L(22)); ctx.fill(); }
+    const top=Math.min(...boxes.map(b=>b.y)), lx=Math.min(...boxes.map(b=>b.x)), rx=Math.max(...boxes.map(b=>b.x+SZ)), bwB=230, bhB=56;
+    roundRect(ctx,X((lx+rx)/2-bwB/2),Y(top-bhB-18),L(bwB),L(bhB),L(bhB/2));
+    ctx.fillStyle='#FFFFFF'; ctx.fill(); ctx.lineWidth=3; ctx.setLineDash(off?[10,8]:[]); ctx.strokeStyle=off?'#9DB3C6':'#4B9CD3'; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=off?'#5A6B7C':'#1D6AA0'; ctx.font=`700 ${Math.round(L(32))}px ${IMG_FONT}`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(off?`Table ${t.n} off`:`Table ${t.n}`, X((lx+rx)/2), Y(top-bhB/2-18)+1);
+    t.seats.forEach((_,i)=>{
+      const b=boxes[i], sid=c.seats[t.n+'-'+i], x=X(b.x+G), y=Y(b.y+G), w=L(SZ-2*G), r=L(12);
+      roundRect(ctx,x,y,w,w,r);
+      if(off){ ctx.setLineDash([10,8]); ctx.strokeStyle='#D3DFE9'; ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]); return; }
+      if(!sid){ ctx.setLineDash([10,8]); ctx.strokeStyle='#9DB3C6'; ctx.lineWidth=3; ctx.stroke(); ctx.setLineDash([]); return; }
+      ctx.fillStyle='#FFFFFF'; ctx.fill(); ctx.strokeStyle='#9DB3C6'; ctx.lineWidth=3; ctx.stroke();
+      const pad=L(12), fit=wrapFit(ctx, names[sid]||'?', w-2*pad, w-2*pad, 64, 14);
+      ctx.fillStyle='#15283A'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      const lh=fit.size*1.1, y0=y+w/2-(fit.lines.length*lh)/2+lh/2;
+      fit.lines.forEach((ln,j)=>ctx.fillText(ln, x+w/2, y0+j*lh+1));
+    });
+  }
+  return cv;
+}
+const downloadsReady = (async()=>{ try{ if(window.claude && window.claude.use) return await window.claude.use('downloads'); }catch(_){} return null; })();
+async function saveFile(filename, blob){
+  const ns = await downloadsReady;
+  if(ns){ await ns.save({filename, data:blob}); return; }
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=filename; document.body.append(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(_){}
+function renderBackup(){
+  const info=$('backupInfo'); if(!info) return;
+  const local = !remote;
+  if(!state.lastBackup){
+    info.textContent = local ? 'No backup yet. Your charts live only in this browser, so download a backup now and then and keep it somewhere safe, like Google Drive.' : 'No backup yet. A backup file lets you restore everything, or move it to another copy of this page.';
+    info.className = local ? 'warnText' : '';
+    return;
+  }
+  const days = Math.floor((Date.now()-new Date(state.lastBackup).getTime())/86400000);
+  info.textContent = `Last backup: ${fmtDate(state.lastBackup)}.` + (local && days>=7 ? ' It’s been over a week, so it’s a good time for a new one.' : '');
+  info.className = local && days>=7 ? 'warnText' : '';
+}
+$('backup').onclick=async()=>{
+  const d=new Date(), stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const blob=new Blob([JSON.stringify({app:'seating-charts', version:1, exportedAt:d.toISOString(), state})],{type:'application/json'});
+  try{ await saveFile(`seating-charts-backup-${stamp}.json`, blob); state.lastBackup=d.toISOString(); commit(); toast('Backup downloaded. Keep it somewhere safe, like Google Drive.'); }
+  catch(e){ const code=e&&e.code; if(code==='rate_limited') toast('A download is already waiting for you to confirm.'); else if(code!=='declined') toast('Couldn’t save the backup here.'); }
+};
+$('restore').onclick=function(){ arm(this,'Replace everything?',()=>$('restoreFile').click()); };
+$('restoreFile').onchange=async e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f) return;
+  try{
+    const obj=JSON.parse(await f.text()); const st=obj&&obj.state?obj.state:obj;
+    if(!st || typeof st!=='object' || !st.classes) throw new Error('bad');
+    try{ localStorage.setItem(LS+'-before-restore', JSON.stringify(state)); }catch(_){}
+    state=normalize(st); for(const k in undoStack) delete undoStack[k]; sel=null; commit();
+    toast(obj.exportedAt?`Restored your backup from ${fmtDate(obj.exportedAt)}.`:'Backup restored.');
+  }catch(_){ toast('That file isn’t a seating chart backup.'); }
+};
+$('download').onclick=async()=>{
+  const c=cls(); if(!Object.keys(c.seats).length){ toast('Seat students before downloading.'); return; }
+  const btn=$('download'); btn.disabled=true;
+  try{
+    const cv=await chartImage(c); const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    await saveFile(`${c.course} ${c.label} seating chart.png`, blob);
+    toast('Image saved. Insert it into your slides from your Downloads folder.');
+  }catch(e){
+    const code=e&&e.code;
+    if(code==='declined'){} else if(code==='rate_limited') toast('A download is already waiting for you to confirm.');
+    else toast('Couldn’t save the image here.');
+  }
+  btn.disabled=false;
+};
+function fitPresent(){
+  if(!document.body.classList.contains('presenting')) return;
+  const nms=[...document.querySelectorAll('#stageWrap .seat:not(.empty):not(.off) .nm')];
+  const fits=nms.map(nm=>{
+    const seat=nm.parentElement; let size=3.2; nm.style.fontSize=size+'cqw';
+    while(size>0.9 && (seat.scrollWidth>seat.clientWidth+1 || seat.scrollHeight>seat.clientHeight+1 || nm.scrollWidth>nm.clientWidth+1)){ size-=0.1; nm.style.fontSize=size.toFixed(2)+'cqw'; }
+    return size;
+  });
+  if(!fits.length) return;
+
+}
+let fitFrame=0;
+window.addEventListener('resize', ()=>{ cancelAnimationFrame(fitFrame); fitFrame=requestAnimationFrame(fitPresent); });
+$('present').onclick=()=>{ sel=null; document.body.classList.add('presenting'); render(); try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(_){} };
+function exitPresent(){ document.body.classList.remove('presenting'); try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }catch(_){} render(); }
+$('exitPresent').onclick=exitPresent;
+$('flipPresent').onclick=()=>{ state.settings.rotate=!state.settings.rotate; commit(); };
+document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && document.body.classList.contains('presenting')) exitPresent(); });
+
+// print
+let printing=false;
+function buildPrint(keys){
+  const root=$('print-root'); root.innerHTML='';
+  const today=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  keys.forEach(k=>{ const c=state.classes[k]; const pg=el('section','print-page'); pg.append(el('h2',null,`${c.course} ${c.label}`), el('p','date',today)); pg.append(buildStage(c, state.settings.rotate, false)); root.append(pg); });
+}
+function doPrint(keys){ buildPrint(keys); printing=true; setTimeout(()=>{ try{ window.print(); }catch(_){ toast('Printing is blocked here. Press Ctrl+P instead.'); } printing=false; },50); }
+window.addEventListener('beforeprint', ()=>{ if(!printing) buildPrint([state.active]); });
+$('print').onclick=()=>doPrint([state.active]);
+$('printAll').onclick=()=>doPrint(Object.keys(state.classes));
+
+/* ---------- account sync ---------- */
+let remote=null, writing=false, again=false, rtimer=null;
+function setSync(mode){ $('sync').textContent = mode==='account'?'Saved to your account, so it’s the same on any computer you sign in on.':mode==='error'?'Couldn’t reach your account just now. Changes are saved in this browser.':'Saved in this browser.'; }
+function queueRemote(){ if(!remote) return; clearTimeout(rtimer); rtimer=setTimeout(flush,700); }
+async function flush(){
+  if(!remote) return; if(writing){ again=true; return; } writing=true;
+  try{ await remote.set({json:JSON.stringify(state), updatedAt:state.updatedAt}); setSync('account'); }catch(e){ setSync('error'); }
+  writing=false; if(again){ again=false; flush(); }
+}
+(async()=>{
+  try{
+    if(!window.claude || !window.claude.use) return;
+    const [db,user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if(!db||!user) return;
+    const uid = await user.id(); if(!uid) return;
+    const ref = db.doc('data/users/'+uid+'/seating');
+    let timedOut=false; const tm=setTimeout(()=>{ timedOut=true; setSync('error'); },10000);
+    const snapDoc = await ref.get(); clearTimeout(tm); if(timedOut) return;
+    remote = ref;
+    const d = snapDoc.exists ? snapDoc.data() : null;
+    if(d && d.json && (d.updatedAt||0) >= (state.updatedAt||0)){
+      state = normalize(JSON.parse(d.json)); try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(_){}
+      render(); setSync('account');
+    } else { await flush(); }
+  }catch(e){ setSync('error'); }
+})();
+
+render();
+</script>
+</body>
+</html>
